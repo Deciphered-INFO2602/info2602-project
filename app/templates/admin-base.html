@@ -79,9 +79,10 @@
                     <span class="material-symbols-outlined me-2">people</span>
                     Instructors
                 </a>
-                <a class="nav-link d-flex align-items-center {{ 'active' if request.path == '/app' }}" href="/students">
-                    <span class="material-symbols-outlined me-2">school</span>
+                <a class="nav-link d-flex align-items-center {{ 'active' if request.path == '/app' }} " href="/students">
+                    <span class="material-symbols-outlined me-2 ">school</span>
                     Students
+                    <span id="unassignedCountSpan" class="badge rounded-pill text-bg-danger ms-auto"></span>
                 </a>
                 <a class="nav-link d-flex align-items-center {{ 'active' if request.path == '/app' }}" href="/lessons">
                     <span class="material-symbols-outlined me-2">schedule</span>
@@ -130,6 +131,20 @@
     document.getElementById("menu-toggle").addEventListener("click", function () {
         document.getElementById("sidebar").classList.toggle("collapsed");
     });
+
+    async function fetchUnassignedStudentsCount() {
+        let result = await fetch("/api/students/unassigned");
+        let data = await result.json();
+
+        const unassignedCount = data.length;
+        console.log("Unassigned students count:", unassignedCount);
+        if (unassignedCount > 0) {
+            unassignedCountSpan.textContent = unassignedCount;
+        } else {
+            unassignedCountSpan.style.display = "none";
+        }
+    }
+    fetchUnassignedStudentsCount();
 </script>
 
 {% block subpage_scripts %}{% endblock %}

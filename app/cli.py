@@ -30,6 +30,34 @@ def initialize():
         db.add(testInstructor)
         db.commit()
 
+        newUser = User(username="Isaiah Bideshi", email="isaiah@mail.com", password=encrypt_password("isaiahpass"), role="instructor")
+        db.add(newUser)
+        db.commit()
+        db.refresh(newUser)
+
+        testInstructor = Instructor(user_id=newUser.id, location="Arima")
+        db.add(testInstructor)
+        db.commit()
+        db.refresh(testInstructor)
+
+        newUser = User(username="Jane Smith", email="jane@mail.com", password=encrypt_password("janepass"), role="student")
+        db.add(newUser)
+        db.commit()
+        db.refresh(newUser)
+
+        testStudent = Student(user_id=newUser.id, instructor_id=testInstructor.id)
+        db.add(testStudent)
+        db.commit()
+
+        newUser = User(username="Alice Johnson", email="alice@mail.com", password=encrypt_password("alicepass"), role="student")
+        db.add(newUser)
+        db.commit()
+        db.refresh(newUser)
+
+        testStudent = Student(user_id=newUser.id, instructor_id=None)
+        db.add(testStudent)
+        db.commit()
+
         print("Database initialized successfully.")
 
 @cli.command()

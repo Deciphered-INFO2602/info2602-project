@@ -28,34 +28,30 @@
 
 {% block subpage_content %}
 
-{% if instructors %}
-      <h2 class="mb-4">Your Instructors</h2>
-      <div class="container text-center">
-         <div class="row row-cols-5 gap-4">
-            <a id="add-instructor" class="col mb-4 rounded-3 shadow-lg border border-2 border-secondary border-dotted p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#addInstructorModal">
-               <div class="card h-100 w-100">
-                  <div class="card-body w-100">
-                     <h5 class="card-title">Add New Instructor</h5>
-                     <span class="material-symbols-outlined add-instructor-icon">add_2</span>
-                  </div>
-               </div>
-            </a>
-            {% for instructor in instructors %}
-               <div class="col mb-4 rounded-3 shadow-lg border border-2 border-secondary p-0">
-                  <div class="card h-100 w-100">
-                     <div class="card-body w-100">
-                        <h5 class="card-title">{{ instructor.user.username }}</h5>
-                        <p class="card-text">{{ instructor.location }}</p>
-                        <a href="/instructors/{{ instructor.id }}" class="btn btn-primary">Manage</a>
-                     </div>
-                  </div>
-               </div>
-            {% endfor %}
+<h2 class="mb-4">Your Instructors</h2>
+<div class="container text-center">
+   <div class="row row-cols-5 gap-4">
+      <a id="add-instructor" class="col mb-4 rounded-3 shadow-lg border border-2 border-secondary border-dotted p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#addInstructorModal">
+         <div class="card h-100 w-100">
+            <div class="card-body w-100">
+               <h5 class="card-title">Add New Instructor</h5>
+               <span class="material-symbols-outlined add-instructor-icon">add_2</span>
+            </div>
          </div>
-      </div>
-{% else %}
-   <p>No instructors found.</p>
-{% endif %}
+      </a>
+      {% for instructor in instructors %}
+         <div class="col mb-4 rounded-3 shadow-lg border border-2 border-secondary p-0">
+            <div class="card h-100 w-100">
+               <div class="card-body w-100">
+                  <h5 class="card-title">{{ instructor.user.username }}</h5>
+                  <p class="card-text">{{ instructor.location }}</p>
+                  <a href="/instructors/{{ instructor.id }}" class="btn btn-primary">Manage</a>
+               </div>
+            </div>
+         </div>
+      {% endfor %}
+   </div>
+</div>
 
 <!-- Add Instructor Modal -->
 <div class="modal fade" id="addInstructorModal" tabindex="-1" aria-labelledby="addInstructorModalLabel" aria-hidden="true">

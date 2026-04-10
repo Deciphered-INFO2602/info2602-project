@@ -7,24 +7,37 @@
 }
 
 .add-student-icon {
-    font-size: 4rem;
+    font-size: 1.5rem;
     display: inline-block;
     transition: transform 0.2s ease-in-out;
 }
 
 #add-student {
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    transition: background-color 0.2s ease-in-out;
     cursor: pointer;
 }
 
 #add-student:hover {
     background-color: #e9ecef;
-    transform: scale(1.05);
 }
 
 .student-subtext {
     color: #6c757d;
     font-size: 0.95rem;
+}
+
+.section-label {
+    letter-spacing: 0.03em;
+}
+
+.student-row-unassigned {
+    border-left: 4px solid #dc3545;
+    background-color: #fff5f5;
+}
+
+.student-row-assigned {
+    border-left: 4px solid #198754;
+    background-color: #f3fff8;
 }
 </style>
 {% endblock %}
@@ -32,41 +45,97 @@
 {% block subpage_content %}
 <h2 class="mb-4">Your Students</h2>
 
-<div class="container text-center">
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-5 gap-4">
-        <a
-            id="add-student"
-            class="col mb-4 rounded-3 shadow-lg border border-2 border-secondary border-dotted p-0 text-decoration-none"
-            data-bs-toggle="modal"
-            data-bs-target="#addStudentModal"
-        >
-            <div class="card h-100 w-100">
-                <div class="card-body w-100 d-flex flex-column justify-content-center">
-                    <h5 class="card-title">Add New Student</h5>
-                    <span class="material-symbols-outlined add-student-icon">add_2</span>
-                </div>
-            </div>
-        </a>
+<div class="container">
+    <div class="list-group shadow-sm rounded-3 overflow-hidden mb-4">
 
-        {% for student in students %}
-        <div class="col mb-4 rounded-3 shadow-lg border border-2 border-secondary p-0">
-            <div class="card h-100 w-100">
-                <div class="card-body w-100">
-                    <h5 class="card-title">
-                        {{ student.user.username if student.user else "Student" }}
-                    </h5>
-                    <p class="card-text mb-1">
+        <div class="list-group-item bg-danger-subtle py-2">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge text-bg-danger section-label">Needs Instructor</span>
+                    <h2 class="h5 mb-0">Unassigned Students</h2>
+                </div>
+                <span class="badge rounded-pill text-bg-danger">{{ unassigned_students | length }}</span>
+            </div>
+        </div>
+
+        {% if unassigned_students %}
+        {% for student in unassigned_students %}
+        <div id="students-list" class="list-group-item py-3 student-row-unassigned">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h5 class="mb-0">{{ student.user.username if student.user else "Student" }}</h5>
+                        <span class="badge text-bg-danger">Unassigned</span>
+                    </div>
+                    <p class="mb-1 text-body-secondary">
                         {{ student.user.email if student.user else "No email available" }}
                     </p>
-                    <p class="student-subtext">
-                        Instructor:
-                        {% if student.instructor and student.instructor.user %}
-                            {{ student.instructor.user.username }}
-                        {% else %}
-                            Unassigned
-                        {% endif %}
+                    <p class="student-subtext mb-0">Instructor: Unassigned</p>
+                </div>
+                <div>
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#assignInstructorModal"
+                        data-student-id="{{ student.id }}"
+                        data-student-name="{{ student.user.username if student.user else 'Student' }}"
+                    >
+                    <span class="material-symbols-outlined align-middle">person_add</span>
+                        Assign
+                    </button>
+                    <button 
+                        class="btn btn-danger" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deleteStudentModal" 
+                        data-student-id="{{ student.id }}" 
+                        data-student-name="{{ student.user.username if student.user else 'Student' }}"
+                    >
+                    <span class="material-symbols-outlined align-middle">delete</span>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="list-group-item py-3">
+            <p class="mb-0 text-body-secondary">All students are currently assigned to an instructor.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="list-group shadow-sm rounded-3 overflow-hidden">
+        <div class="list-group-item bg-success-subtle py-2">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge text-bg-success section-label">Assigned</span>
+                    <h2 class="h5 mb-0">Assigned Students</h2>
+                </div>
+                <span class="badge rounded-pill text-bg-success">{{ assigned_students | length }}</span>
+            </div>
+        </div>
+
+        {% for student in assigned_students %}
+        <div id="students-list" class="list-group-item py-3 student-row-assigned">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h5 class="mb-0">{{ student.user.username if student.user else "Student" }}</h5>
+                        <span class="badge text-bg-success">Assigned</span>
+                    </div>
+                    <p class="mb-1 text-body-secondary">
+                        {{ student.user.email if student.user else "No email available" }}
                     </p>
-                    <a href="/students/{{ student.id }}" class="btn btn-primary">Manage</a>
+                    <p class="student-subtext mb-0">
+                        Instructor: {{ student.instructor.user.username if student.instructor and student.instructor.user else "Unassigned" }}
+                    </p>
+                </div>
+                <div>
+                    <a href="/students/{{ student.id }}" class="btn btn-primary">
+                    <span class="material-symbols-outlined align-middle">manage_accounts</span>
+                        Manage
+                    </a>
                 </div>
             </div>
         </div>
@@ -74,18 +143,52 @@
     </div>
 </div>
 
+<!-- Modals -->
+<div class="modal fade" id="assignInstructorModal" tabindex="-1" aria-labelledby="assignInstructorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="assignInstructorForm" method="POST" action="">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="assignInstructorModalLabel">Assign Instructor</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group input-group-sm mb-2">
+                        <span class="input-group-text">Instructor</span>
+                        <select class="form-select" name="instructor_id" required>
+                                <option value="" selected disabled>Select instructor</option>
+                                {% for instructor in instructors %}
+                                <option value="{{ instructor.id }}">
+                                        {{ instructor.user.username if instructor.user else "Instructor " ~ instructor.id }}
+                                </option>
+                                {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Assign Instructor</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <div
     class="modal fade"
-    id="addStudentModal"
+    id="deleteStudentModal"
     tabindex="-1"
-    aria-labelledby="addStudentModalLabel"
+    aria-labelledby="deleteStudentModalLabel"
     aria-hidden="true"
 >
     <div class="modal-dialog">
-        <form method="POST" action="/api/students">
+        <form method="POST" action="">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="addStudentModalLabel">Add New Student</h1>
+                    <h1 class="modal-title fs-5 text-danger" id="deleteStudentModalLabel">
+                        Delete Student
+                    </h1>
                     <button
                         type="button"
                         class="btn-close"
@@ -95,42 +198,75 @@
                 </div>
 
                 <div class="modal-body">
-                    <div class="input-group input-group-sm mb-2">
-                        <span class="input-group-text">Username</span>
-                        <input type="text" class="form-control" name="username" required>
-                    </div>
-
-                    <div class="input-group input-group-sm mb-2">
-                        <span class="input-group-text">Email</span>
-                        <input type="email" class="form-control" name="email" required>
-                    </div>
-
-                    <div class="input-group input-group-sm mb-2">
-                        <span class="input-group-text">Password</span>
-                        <input type="password" class="form-control" name="password" required>
-                    </div>
-
-                    <div class="input-group input-group-sm mb-2">
-                        <span class="input-group-text">Instructor</span>
-                        <select class="form-select" name="instructor_id">
-                            <option value="">Unassigned</option>
-                            {% for instructor in instructors %}
-                            <option value="{{ instructor.id }}">
-                                {{ instructor.user.username if instructor.user else "Instructor " ~ instructor.id }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                    <p class="mb-1">This will remove the student profile from the system.</p>
+                    <p class="mb-0 text-danger"><strong>This action cannot be undone.</strong></p>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        Close
+                        Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary">Add Student</button>
+                    <button type="submit" class="btn btn-danger">Delete Student</button>
                 </div>
             </div>
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script>
+const assignInstructorModal = document.getElementById("assignInstructorModal");
+const assignInstructorForm = document.getElementById("assignInstructorForm");
+const assignInstructorModalLabel = document.getElementById("assignInstructorModalLabel");
+
+const deleteStudentModal = document.getElementById("deleteStudentModal");
+
+if (assignInstructorModal && assignInstructorForm && assignInstructorModalLabel) {
+        assignInstructorModal.addEventListener("show.bs.modal", function (event) {
+                const triggerButton = event.relatedTarget;
+
+                if (!triggerButton) {
+                        return;
+                }
+
+                const studentId = triggerButton.getAttribute("data-student-id");
+                const studentName = triggerButton.getAttribute("data-student-name") || "Student";
+
+                if (!studentId) {
+                        return;
+                }
+
+                assignInstructorForm.action = `/api/students/${studentId}/assign_instructor`;
+                assignInstructorModalLabel.textContent = `Assign Instructor: ${studentName}`;
+        });
+}
+
+if (deleteStudentModal) {
+        deleteStudentModal.addEventListener("show.bs.modal", function (event) {
+                const triggerButton = event.relatedTarget;
+
+                if (!triggerButton) {
+                        return;
+                }
+
+                const studentId = triggerButton.getAttribute("data-student-id");
+                const studentName = triggerButton.getAttribute("data-student-name") || "Student";
+
+                if (!studentId) {
+                    return;
+                }
+
+                const deleteForm = deleteStudentModal.querySelector("form");
+                if (deleteForm) {
+                    deleteForm.action = `/api/students/${studentId}/delete`;
+                }
+
+                const deleteModalLabel = deleteStudentModal.querySelector(".modal-title");
+                if (deleteModalLabel) {
+                    deleteModalLabel.textContent = `Delete Student: ${studentName}`;
+                }
+        });
+}
+</script>
 {% endblock %}

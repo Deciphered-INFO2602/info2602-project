@@ -24,10 +24,6 @@ def get_student_or_404(db, student_id: int) -> Student:
     return student
 
 
-def get_all_instructors(db):
-    return db.exec(select(Instructor)).all()
-
-
 def parse_instructor_id(instructor_id: Optional[str]) -> Optional[int]:
     if instructor_id is None:
         return None
@@ -64,18 +60,26 @@ def validate_instructor_id(db, instructor_id: Optional[int]) -> Optional[int]:
 
 
 @router.get("/students")
-def get_students(request: Request, user: AdminDep, db: SessionDep):
-    students = db.exec(select(Student)).all()
-    instructors = get_all_instructors(db)
+def get_students(
+    request: Request,
+    user: AdminDep,
+    db: SessionDep,
+):
+    assigned_students = db.exec(select(Student).where(Student.instructor_id != None)).all()
+    unassigned_students = db.exec(select(Student).where(Student.instructor_id == None)).all()
 
-    students = sorted(students, key=lambda row: row.id or 0, reverse=True)
+    assigned_students = sorted(assigned_students, key=lambda row: row.id or 0, reverse=True)
+    unassigned_students = sorted(unassigned_students, key=lambda row: row.id or 0, reverse=True)
+
+    instructors = db.exec(select(Instructor)).all()
 
     return templates.TemplateResponse(
         request=request,
         name="students.html",
         context={
             "user": user,
-            "students": students,
+            "assigned_students": assigned_students,
+            "unassigned_students": unassigned_students,
             "instructors": instructors,
         },
     )
@@ -84,7 +88,7 @@ def get_students(request: Request, user: AdminDep, db: SessionDep):
 @router.get("/students/{student_id}")
 def get_student(request: Request, student_id: int, user: AdminDep, db: SessionDep):
     student = get_student_or_404(db, student_id)
-    instructors = get_all_instructors(db)
+    instructors = db.exec(select(Instructor)).all()
 
     return templates.TemplateResponse(
         request=request,
@@ -100,6 +104,11 @@ def get_student(request: Request, student_id: int, user: AdminDep, db: SessionDe
 @api_router.get("/students")
 def api_get_students(user: AdminDep, db: SessionDep):
     return db.exec(select(Student)).all()
+
+
+@api_router.get("/students/unassigned")
+def api_get_unassigned_students(user: AdminDep, db: SessionDep):
+    return db.exec(select(Student).where(Student.instructor_id == None)).all()
 
 
 @api_router.get("/students/{student_id}")
@@ -153,6 +162,52 @@ def api_create_student(
         return RedirectResponse(url="/students", status_code=status.HTTP_303_SEE_OTHER)
 
 
+@api_router.post("/students/{student_id}/assign_instructor")
+def api_assign_instructor(
+    student_id: int,
+    request: Request,
+    user: AdminDep,
+    db: SessionDep,
+    instructor_id: str = Form(),
+):
+    student = get_student_or_404(db, student_id)
+
+    if student.instructor_id is not None:
+        flash(request, "Instructor assignment cannot be changed once set", "danger")
+        return RedirectResponse(
+            url=f"/students/{student_id}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    try:
+        parsed_instructor_id = validate_instructor_id(
+            db,
+            parse_instructor_id(instructor_id),
+        )
+
+        student.instructor_id = parsed_instructor_id
+        instructor = db.get(Instructor, parsed_instructor_id) if parsed_instructor_id else None
+        instructor.students.append(student) if instructor else None
+        db.add(student)
+        db.add(instructor) if instructor else None  
+        db.commit()
+        db.refresh(student)
+        db.refresh(instructor) if instructor else None
+        flash(request, "Instructor assigned successfully!")
+        return RedirectResponse(
+            url=f"/students/{student_id}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        flash(request, "Could not assign instructor.", "danger")
+        return RedirectResponse(
+            url=f"/students/{student_id}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+
 @api_router.post("/students/{student_id}/update")
 def api_update_student(
     student_id: int,
@@ -180,19 +235,36 @@ def api_update_student(
             parse_instructor_id(instructor_id),
         )
 
+        if student.instructor_id:
+            current_instructor = db.get(Instructor, student.instructor_id)
+            if not current_instructor:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Current instructor not found",
+                )
+            current_instructor.students.remove(student)
+            db.add(current_instructor)
+
+
         linked_user.username = username
         linked_user.email = email
 
         if password and password.strip():
             linked_user.password = encrypt_password(password)
 
+        if not parsed_instructor_id:
+            student.instructor_id = None
         student.instructor_id = parsed_instructor_id
+        instructor = db.get(Instructor, parsed_instructor_id) if parsed_instructor_id else None
+        instructor.students.append(student) if instructor else None
 
         db.add(linked_user)
         db.add(student)
+        db.add(instructor) if instructor else None
         db.commit()
         db.refresh(linked_user)
         db.refresh(student)
+        db.refresh(instructor) if instructor else None
 
         flash(request, "Student updated successfully!")
         return RedirectResponse(
@@ -201,7 +273,8 @@ def api_update_student(
         )
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
+        print(f"Error updating student: {e}")
         db.rollback()
         flash(request, "Could not update student. Username or email may already exist.", "danger")
         return RedirectResponse(
