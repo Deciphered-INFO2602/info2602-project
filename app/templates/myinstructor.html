@@ -1,0 +1,110 @@
+{% extends "student-base.html" %}
+
+{% block additional_styles %}
+<style>
+.instructor-hero {
+	background: linear-gradient(115deg, #2a2f4f 0%, #2b5876 55%, #4e4376 100%);
+	color: #fff;
+	border-radius: 1rem;
+	padding: 1.5rem;
+}
+
+.info-card {
+	border: 1px solid #dfe5ec;
+	border-radius: 1rem;
+	background: #fff;
+}
+
+.info-label {
+	font-size: 0.85rem;
+	color: #6c757d;
+	margin-bottom: 0.25rem;
+}
+
+.info-value {
+	font-size: 1.1rem;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid px-0">
+	<div class="instructor-hero mb-4 shadow-sm">
+		<div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+			<div>
+				<h2 class="mb-1">My Instructor</h2>
+				<p class="mb-0 opacity-75">View your assigned instructor and upcoming sessions.</p>
+			</div>
+			<div class="text-end">
+				<span class="badge text-bg-light">
+					Student ID: {{ student.id if student else "N/A" }}
+				</span>
+			</div>
+		</div>
+	</div>
+
+	{% if instructor and instructor_user %}
+	<div class="row g-3 mb-4">
+		<div class="col-12 col-lg-4">
+			<div class="info-card p-3 h-100 shadow-sm">
+				<p class="info-label">Name</p>
+				<p class="info-value">{{ instructor_user.username }}</p>
+			</div>
+		</div>
+		<div class="col-12 col-lg-4">
+			<div class="info-card p-3 h-100 shadow-sm">
+				<p class="info-label">Email</p>
+				<p class="info-value">{{ instructor_user.email }}</p>
+			</div>
+		</div>
+		<div class="col-12 col-lg-4">
+			<div class="info-card p-3 h-100 shadow-sm">
+				<p class="info-label">Location</p>
+				<p class="info-value">{{ instructor.location }}</p>
+			</div>
+		</div>
+	</div>
+
+	<div class="info-card p-3 p-md-4 shadow-sm">
+		<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+			<h4 class="mb-0">Upcoming Lessons With {{ instructor_user.username }}</h4>
+		</div>
+
+		{% if upcoming_lessons %}
+		<ul class="list-group list-group-flush">
+			{% for lesson in upcoming_lessons %}
+			<li class="list-group-item px-0">
+				<div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+					<div>
+						<p class="mb-1 fw-semibold">
+							{% if lesson.date %}
+								{{ lesson.date.strftime("%A, %d %b %Y at %I:%M %p") }}
+							{% else %}
+								Date and time to be confirmed
+							{% endif %}
+						</p>
+						<p class="text-secondary mb-0">Lesson ID: {{ lesson.id }}</p>
+					</div>
+					<span class="badge text-bg-primary">{{ lesson.status|capitalize }}</span>
+				</div>
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<div class="alert alert-light border mb-0" role="alert">
+			No upcoming lessons are scheduled with your instructor.
+		</div>
+		{% endif %}
+	</div>
+	{% else %}
+	<div class="info-card p-4 shadow-sm">
+		<h4 class="mb-2">No Instructor Assigned Yet</h4>
+		<p class="text-secondary mb-0">
+			You do not currently have an assigned instructor. Please contact an admin to get matched with one.
+		</p>
+	</div>
+	{% endif %}
+</div>
+{% endblock %}

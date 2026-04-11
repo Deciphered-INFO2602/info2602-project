@@ -26,7 +26,7 @@ async def admin_home_view(
 
     return templates.TemplateResponse(
         request=request,
-        name="admin.html",
+        name="admin-home.html",
         context={
             "user": user,
             "metrics": {

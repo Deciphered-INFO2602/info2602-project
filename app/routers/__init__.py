@@ -34,4 +34,6 @@ from . import (
     users,
     logout,
     students,
+    student_home,
+    lessons,
 )

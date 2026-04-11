@@ -1,0 +1,71 @@
+{% extends "student-base.html" %}
+
+{% block additional_styles %}
+<style>
+
+</style>
+{% endblock %}
+
+{% block subpage_content %}
+<div id="wrapper" class="display-flex flex-column">
+    <div class="container-fluid px-0">
+        <h2 class="mb-4">My Lessons</h2>
+
+        {% if upcoming_lessons %}
+        <div class="list-group mb-4">
+            {% for lesson in lessons %}
+            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start shadow-sm mb-2 rounded-3">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">Lesson {{ lesson.id }}</h5>
+                    <small class="text-muted">{{ lesson.date.strftime("%A, %d %b %Y at %I:%M %p") if lesson.date else "Date to be confirmed" }}</small>
+                </div>
+                <p class="mb-1">Status: {{ lesson.status|capitalize }}</p>
+                <small class="text-muted">Instructor: {{ instructor_user.username if instructor_user else "N/A" }}</small>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-light border" role="alert">
+            You do not have any scheduled lessons yet.
+        </div>
+        {% endif %}
+    </div>
+    <div id="calendar">
+    </div>
+</div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js'></script>
+<script>
+    lessons = {{ lessons|tojson }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("Lessons data passed to template:", lessons);
+        let events = [];
+        for (lesson of lessons) {
+            events.push({
+                title: `Lesson ${lesson.id} - ${lesson.status.charAt(0).toUpperCase() + lesson.status.slice(1)}`,
+                start: lesson.date,
+                allDay: false
+            });
+        }
+
+        console.log("Events for calendar:", events);
+
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            height: "auto",
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: events
+        });
+        calendar.render();
+    });
+</script>
+
+{% endblock %}
