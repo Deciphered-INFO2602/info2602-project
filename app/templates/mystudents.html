@@ -1,0 +1,170 @@
+{% extends "instructor-base.html" %}
+
+{% block additional_styles %}
+<style>
+.students-hero {
+	background: linear-gradient(112deg, #1b263b 0%, #2b5876 52%, #4e4376 100%);
+	color: #fff;
+	border-radius: 1rem;
+	padding: 1.5rem;
+}
+
+.metric-box {
+	border: 1px solid #dfe5ec;
+	border-radius: 0.9rem;
+	background: #fff;
+}
+
+.metric-label {
+	font-size: 0.85rem;
+	color: #6c757d;
+}
+
+.metric-number {
+	font-size: 2rem;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.students-panel {
+	border: 1px solid #dfe5ec;
+	border-radius: 1rem;
+	background: #fff;
+}
+
+.student-card {
+	border: 1px solid #e9edf2;
+	border-radius: 0.9rem;
+	background: #fff;
+}
+
+.student-avatar {
+	width: 2.4rem;
+	height: 2.4rem;
+	border-radius: 50%;
+	background: #eef3f9;
+	color: #2f4f6f;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+}
+
+.meta-label {
+	font-size: 0.8rem;
+	color: #6c757d;
+	margin-bottom: 0.1rem;
+}
+
+.meta-value {
+	margin-bottom: 0;
+	font-weight: 600;
+}
+</style>
+{% endblock %}
+
+
+{% block subpage_content %}
+
+<div class="container-fluid px-0">
+	<div class="students-hero mb-4 shadow-sm">
+		<div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+			<div>
+				<h2 class="mb-1">My Students</h2>
+				<p class="mb-0 opacity-75">View your assigned students and keep track of who you are training.</p>
+			</div>
+			<div class="text-end">
+				<p class="mb-0"><strong>Instructor:</strong> {{ user.username }}</p>
+			</div>
+		</div>
+	</div>
+
+	<div class="row g-3 mb-4">
+		<div class="col-12 col-md-6 col-xl-4">
+			<div class="metric-box p-3 h-100">
+				<p class="metric-label mb-1">Assigned Students</p>
+				<p class="metric-number mb-1">{{ students | length }}</p>
+				<small class="text-secondary">Active student roster</small>
+			</div>
+		</div>
+		<div class="col-12 col-md-6 col-xl-4">
+			<div class="metric-box p-3 h-100">
+				<p class="metric-label mb-1">Need Lesson Scheduled</p>
+				<p class="metric-number mb-1">
+					{{ students | selectattr("lessons", "equalto", []) | list | length }}
+				</p>
+				<small class="text-secondary">Students with no lessons scheduled</small>
+			</div>
+		</div>
+		<div class="col-12 col-md-6 col-xl-4">
+			<div class="metric-box p-3 h-100">
+				<p class="metric-label mb-1">Total Lesson Records</p>
+				<p class="metric-number mb-1">
+					{% set lesson_total = 0 %}
+					{% for student in students %}
+						{% set lesson_total = lesson_total + (student.lessons | length if student.lessons else 0) %}
+					{% endfor %}
+					{{ lesson_total }}
+				</p>
+				<small class="text-secondary">Across all assigned students</small>
+			</div>
+		</div>
+	</div>
+
+	<div class="students-panel p-3 p-md-4 shadow-sm">
+		<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+			<h4 class="mb-0">Assigned Student List</h4>
+			<span class="badge text-bg-secondary">{{ students | length }} total</span>
+		</div>
+
+		{% if students %}
+		<div class="row g-3">
+			{% for student in students %}
+			<div class="col-12 col-md-6 col-xl-4">
+				<div class="student-card p-3 h-100 shadow-sm">
+					<div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+						<div class="d-flex align-items-center gap-2">
+							<span class="student-avatar">{{ (student.user.username[0] if student.user and student.user.username else "S") | upper }}</span>
+							<div>
+								<p class="mb-0 fw-semibold">{{ student.user.username if student.user else "Student" }}</p>
+								<small class="text-secondary">{{ student.user.email if student.user else "No email available" }}</small>
+							</div>
+						</div>
+						<span class="badge text-bg-light">
+                            <a href="/chat/{{ student.user_id }}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">chat</span>
+                                Chat
+                            </a>
+                        </span>
+					</div>
+
+					<div class="row g-2">
+						<div class="col-6">
+							<p class="meta-label">Scheduled Lessons</p>
+							<p class="meta-value">
+								{{ student.lessons | selectattr("status", "equalto", "scheduled") | list | length if student.lessons else 0 }}
+							</p>
+						</div>
+						<div class="col-6">
+							<p class="meta-label">Completed Lessons</p>
+							<p class="meta-value">
+								{{ student.lessons | selectattr("status", "equalto", "completed") | list | length if student.lessons else 0 }}
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+		{% else %}
+		<div class="alert alert-light border mb-0" role="alert">
+			You do not have any students assigned yet.
+		</div>
+		{% endif %}
+	</div>
+</div>
+{% endblock %}
+
+{% block subpage_scripts %}
+
+{% endblock %}
