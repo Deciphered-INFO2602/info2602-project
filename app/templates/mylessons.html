@@ -1,4 +1,8 @@
-{% extends "student-base.html" %}
+{% if isStudent %}
+    {% extends "student-base.html" %}
+{% elif isInstructor %}
+    {% extends "instructor-base.html" %}
+{% endif %}
 
 {% block additional_styles %}
 <style>
@@ -9,30 +13,107 @@
 {% block subpage_content %}
 <div id="wrapper" class="display-flex flex-column">
     <div class="container-fluid px-0">
-        <h2 class="mb-4">My Lessons</h2>
-
-        {% if upcoming_lessons %}
-        <div class="list-group mb-4">
-            {% for lesson in lessons %}
-            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start shadow-sm mb-2 rounded-3">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">Lesson {{ lesson.id }}</h5>
-                    <small class="text-muted">{{ lesson.date.strftime("%A, %d %b %Y at %I:%M %p") if lesson.date else "Date to be confirmed" }}</small>
-                </div>
-                <p class="mb-1">Status: {{ lesson.status|capitalize }}</p>
-                <small class="text-muted">Instructor: {{ instructor_user.username if instructor_user else "N/A" }}</small>
-            </a>
-            {% endfor %}
+        <div class="align-items-center mb-4">
+            <h2 class="">My Lessons</h2> 
+          {% if isInstructor %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createLessonModal">
+                <span class="material-symbols-outlined align-middle" style="font-size: 18px;">add</span>
+                Create Lesson
+            </button>
+          {% endif %}
         </div>
-        {% else %}
-        <div class="alert alert-light border" role="alert">
-            You do not have any scheduled lessons yet.
-        </div>
-        {% endif %}
     </div>
     <div id="calendar">
     </div>
 </div>
+
+
+<!-- Edit Lesson Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="lessonForm" action="/lesson" method="POST">
+          <input type="hidden" name="lesson_id" id="lesson_id">
+          <div class="mb-3">
+            <label for="lesson_date" class="form-label">Lesson Date</label>
+            <input type="datetime-local" class="form-control" id="lesson_date" name="lesson_date">
+          </div>
+          <div class="mb-3">
+            <label for="lesson_status" class="form-label">Lesson Status</label>
+            <select class="form-control" id="lesson_status" name="lesson_status">
+              <option value="scheduled">Scheduled</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          {% if isInstructor %}
+          <div class="mb-3">
+            <label for="lesson_student" class="form-label">Student</label>
+            <select class="form-control" id="lesson_student" name="student_id" required>
+              <option value="">Select Student</option>
+              {% for student in students|default([]) %}
+                <option value="{{ student.id }}">{{ student.user.username if student.user else "Student " ~ student.id }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" form="lessonForm" id="lessonSubmitButton" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% if isInstructor %}
+<!-- Create Lesson Modal -->
+<div class="modal fade" id="createLessonModal" tabindex="-1" aria-labelledby="createLessonLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="createLessonLabel">Create Lesson</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createLessonForm" action="/lesson" method="POST">
+          <div class="mb-3">
+            <label for="create_lesson_date" class="form-label">Lesson Date</label>
+            <input type="datetime-local" class="form-control" id="create_lesson_date" name="lesson_date" required>
+          </div>
+          <div class="mb-3">
+            <label for="create_lesson_status" class="form-label">Lesson Status</label>
+            <select class="form-control" id="create_lesson_status" name="lesson_status">
+              <option value="scheduled">Scheduled</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="create_lesson_student" class="form-label">Student</label>
+            <select class="form-control" id="create_lesson_student" name="student_id" required>
+              <option value="">Select Student</option>
+              {% for student in students|default([]) %}
+                <option value="{{ student.id }}">{{ student.user.username if student.user else "Student " ~ student.id }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" form="createLessonForm" id="createLessonSubmitButton" class="btn btn-primary">Create lesson</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block subpage_scripts %}
@@ -44,10 +125,22 @@
         console.log("Lessons data passed to template:", lessons);
         let events = [];
         for (lesson of lessons) {
+            const status = lesson.status || "scheduled";
+            const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+            const color = status === "scheduled" ? 'blue' : status === "completed" ? 'green' : status === "cancelled" ? 'red' : 'gray';
             events.push({
-                title: `Lesson ${lesson.id} - ${lesson.status.charAt(0).toUpperCase() + lesson.status.slice(1)}`,
+                id: lesson.id,
+                title: `Lesson ${lesson.id} - ${statusLabel}`,
                 start: lesson.date,
-                allDay: false
+                allDay: false,
+                color: color,
+                extendedProps: {
+                    lessonId: lesson.id,
+                    status: status,
+                    statusLabel: statusLabel,
+                    date: lesson.date,
+                  studentId: lesson.student_id,
+                }
             });
         }
 
@@ -61,10 +154,34 @@
                 left: 'prev,next today',
                 center: 'title',
             },
-            events: events
+            events: events,
+            eventClick: editLesson,
         });
         calendar.render();
     });
+
+    function editLesson(info) {
+        info.jsEvent.preventDefault();
+
+        const lessonId = info.event.extendedProps.lessonId || info.event.id;
+        const lessonDate = info.event.extendedProps.date || info.event.startStr;
+        const lessonStatus = info.event.extendedProps.status || "scheduled";
+        const lessonStudentId = info.event.extendedProps.studentId || "";
+
+        document.getElementById("lesson_id").value = lessonId;
+        document.getElementById("lesson_date").value = lessonDate.slice(0, 16);
+        document.getElementById("lesson_status").value = lessonStatus;
+        const studentSelect = document.getElementById("lesson_student");
+        if (studentSelect) {
+          studentSelect.value = String(lessonStudentId);
+        }
+        document.getElementById("exampleModalLabel").textContent = `Edit Lesson ${lessonId}`;
+        document.getElementById("lessonSubmitButton").textContent = "Save changes";
+
+        const modalEl = document.getElementById("exampleModal");
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
 </script>
 
 {% endblock %}

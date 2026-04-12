@@ -36,4 +36,6 @@ from . import (
     students,
     student_home,
     lessons,
+    chat,
+    instructor_home,
 )
