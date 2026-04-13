@@ -70,7 +70,7 @@
                     <p class="mb-1 text-body-secondary">
                         {{ student.user.email if student.user else "No email available" }}
                     </p>
-                    <p class="student-subtext mb-0">Instructor: Unassigned</p>
+                    <p class="student-subtext mb-0">Preferred Location: {{ student.location if student.location else "Not specified" }}</p>
                 </div>
                 <div>
                     <button
@@ -160,6 +160,8 @@
                                 {% for instructor in instructors %}
                                 <option value="{{ instructor.id }}">
                                         {{ instructor.user.username if instructor.user else "Instructor " ~ instructor.id }}
+                                        -
+                                        {{ instructor.location if instructor.location else "No location specified" }}
                                 </option>
                                 {% endfor %}
                         </select>

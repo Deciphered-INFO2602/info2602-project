@@ -24,6 +24,7 @@ class Student(SQLModel, table=True):
     
     instructor: Optional["Instructor"] = Relationship(back_populates="students")
     lessons: list["Lesson"] = Relationship(back_populates="student")
+    location: str
 
 
 class Instructor(SQLModel, table=True):

@@ -1,6 +1,8 @@
+from sqlmodel import select
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi import Request, status, Form, HTTPException
 from app.dependencies import SessionDep
+from app.models.user import Instructor
 from app.schemas.auth import SignupRequest
 from app.services.auth_service import AuthService
 from app.repositories.user import UserRepository
@@ -9,10 +11,14 @@ from . import router, templates
 
 # View route (loads the page)
 @router.get("/register", response_class=HTMLResponse)
-async def register_view(request: Request):
+async def register_view(request: Request, db: SessionDep):
+    instructors = db.exec(select(Instructor)).all()
+    locations = set(instructor.location for instructor in instructors)
+    
     return templates.TemplateResponse(
         request=request, 
         name="register.html",
+        context={"locations": locations}
     )
 
 # Action route (performs an action)
@@ -21,11 +27,12 @@ def signup_user(request:Request, db:SessionDep,
     username: str = Form(),
     email: str = Form(),
     password: str = Form(),
+    location: str = Form()
 ):
     user_repo = UserRepository(db)
     auth_service = AuthService(user_repo)
     try:
-        user = auth_service.register_user(username, email, password)
+        user = auth_service.register_user(username, email, password, location)
         flash(request, "Registration completed! Sign in now!")
         return RedirectResponse(url=request.url_for("login_view"), status_code=status.HTTP_303_SEE_OTHER)
     except Exception as e:

@@ -124,6 +124,7 @@ def api_create_student(
     username: str = Form(),
     email: str = Form(),
     password: str = Form(),
+    location: str = Form(),
     instructor_id: Optional[str] = Form(None),
 ):
     try:
@@ -145,6 +146,7 @@ def api_create_student(
         new_student = Student(
             user_id=new_user.id,
             instructor_id=parsed_instructor_id,
+            location=location
         )
 
         db.add(new_student)

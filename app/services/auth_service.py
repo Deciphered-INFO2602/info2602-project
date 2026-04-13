@@ -22,7 +22,7 @@ class AuthService:
         access_token = create_access_token(data={"sub": f"{user.id}", "role": user.role})
         return access_token
 
-    def register_user(self, username: str, email: str, password: str):
+    def register_user(self, username: str, email: str, password: str, location: str):
         try:
             new_user = User(
                 username=username,
@@ -34,7 +34,7 @@ class AuthService:
             self.db.add(new_user)
             self.db.flush()
 
-            new_student = Student(user_id=new_user.id)
+            new_student = Student(user_id=new_user.id, location=location)
             self.db.add(new_student)
 
             self.db.commit()

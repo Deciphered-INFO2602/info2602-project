@@ -30,12 +30,12 @@ def initialize():
         db.add(testInstructor)
         db.commit()
 
-        newUser = User(username="Isaiah Bideshi", email="isaiah@mail.com", password=encrypt_password("isaiahpass"), role="instructor")
+        newUser = User(username="Billy Johnson", email="billy.johnson@mail.com", password=encrypt_password("billypass"), role="instructor")
         db.add(newUser)
         db.commit()
         db.refresh(newUser)
 
-        testInstructor = Instructor(user_id=newUser.id, location="Arima")
+        testInstructor = Instructor(user_id=newUser.id, location="Sangre Grande")
         db.add(testInstructor)
         db.commit()
         db.refresh(testInstructor)
@@ -45,7 +45,7 @@ def initialize():
         db.commit()
         db.refresh(newUser)
 
-        testStudent = Student(user_id=newUser.id, instructor_id=testInstructor.id)
+        testStudent = Student(user_id=newUser.id, instructor_id=testInstructor.id, location="Sangre Grande")
         db.add(testStudent)
         db.commit()
 
@@ -54,7 +54,7 @@ def initialize():
         db.commit()
         db.refresh(newUser)
 
-        testStudent = Student(user_id=newUser.id, instructor_id=None)
+        testStudent = Student(user_id=newUser.id, instructor_id=None, location="Arima")
         db.add(testStudent)
         db.commit()
 
