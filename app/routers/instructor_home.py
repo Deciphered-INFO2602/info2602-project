@@ -66,11 +66,31 @@ def my_students_view(
     instructor = db.exec(select(Instructor).where(Instructor.user_id == user.id)).first()
     students = instructor.students if instructor else []
 
+    total_lessons = 0
+    need_lessons_count = 0
+    for student in students:
+        lesson_count = 0
+        for lesson in student.lessons:
+            print(f"Student {student.id} has lesson {lesson.id} with status {lesson.status}")
+            if lesson.status == "scheduled":
+                print("adding lesson")
+                total_lessons += 1
+                lesson_count += 1
+        
+        if lesson_count == 0:
+            need_lessons_count += 1
+
+
     return templates.TemplateResponse(
         request=request,
         name="mystudents.html",
         context={
             "user": user,
-            "students": students 
+            "students": students,
+            "metrics": {
+                "total_students": len(students),
+                "students_need_lessons": need_lessons_count,
+                "total_lessons": total_lessons,
+            }
         }
     )

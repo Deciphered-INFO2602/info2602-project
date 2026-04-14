@@ -83,7 +83,7 @@
 		<div class="col-12 col-md-6 col-xl-4">
 			<div class="metric-box p-3 h-100">
 				<p class="metric-label mb-1">Assigned Students</p>
-				<p class="metric-number mb-1">{{ students | length }}</p>
+				<p class="metric-number mb-1">{{ metrics.total_students if metrics else 0 }}</p>
 				<small class="text-secondary">Active student roster</small>
 			</div>
 		</div>
@@ -91,7 +91,7 @@
 			<div class="metric-box p-3 h-100">
 				<p class="metric-label mb-1">Need Lesson Scheduled</p>
 				<p class="metric-number mb-1">
-					{{ students | selectattr("lessons", "equalto", []) | list | length }}
+					{{ metrics.students_need_lessons if metrics else 0 }}
 				</p>
 				<small class="text-secondary">Students with no lessons scheduled</small>
 			</div>
@@ -100,10 +100,8 @@
 			<div class="metric-box p-3 h-100">
 				<p class="metric-label mb-1">Total Lesson Records</p>
 				<p class="metric-number mb-1">
-					{% set lesson_total = 0 %}
-					{% for student in students %}
-						{% set lesson_total = lesson_total + (student.lessons | length if student.lessons else 0) %}
-					{% endfor %}
+					{{ metrics.total_lessons if metrics else 0 }}
+				</p>
 					{{ lesson_total }}
 				</p>
 				<small class="text-secondary">Across all assigned students</small>
